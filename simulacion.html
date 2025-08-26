@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulación — Estimadores en U{1,…,θ} (Canvas)</title>
+  <style>
+    :root{--bg:#0f1220;--panel:#171a2b;--accent:#5ae0b5;--text:#e7e9f1;--muted:#9aa0b4;--warn:#f6c177}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:var(--bg); color:var(--text)}
+    header{padding:18px 20px;border-bottom:1px solid #23263a;background:linear-gradient(180deg,#14172a 0%, #101323 100%)}
+    header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.2px}
+    header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
+    @media (max-width: 980px){.wrap{grid-template-columns:1fr}}
+
+    .card{background:var(--panel);border:1px solid #23263a;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .card h2{font-size:15px;margin:0 0 10px 0;color:#dbe0f5}
+    .card .content{padding:16px}
+
+    .controls .row{display:grid;grid-template-columns:120px 1fr 86px;gap:10px;align-items:center;margin-bottom:10px}
+    .controls label{font-size:13px;color:var(--muted)}
+    .controls input[type="number"], .controls input[type="text"]{width:100%;padding:8px;border-radius:10px;border:1px solid #2a2e47;background:#0e1120;color:var(--text)}
+    .controls input[type="range"]{width:100%}
+    .controls .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .badge{background:#101323;border:1px solid #2a2e47;color:#cfd4ea;padding:6px 8px;border-radius:999px;font-size:12px;display:inline-flex;gap:6px;align-items:center}
+    .badge input{accent-color:var(--accent)}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{appearance:none;border:1px solid #2a2e47;background:#0f1220;color:#e7e9f1;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+    .btn:hover{border-color:#3a3f63}
+    .btn.primary{background:linear-gradient(180deg,#1c213a 0%, #101323 100%); border-color:#3a3f63}
+
+    canvas{width:100%;display:block;aspect-ratio:16/6;background:#0b0e1a;border-bottom-left-radius:16px;border-bottom-right-radius:16px;image-rendering:optimizeQuality}
+    .chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .chart-head .title{font-size:14px;color:#d8defa}
+    .chart-head .meta{font-size:12px;color:var(--muted)}
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{position:sticky;top:0;background:#14172a}
+    th,td{padding:8px;border-bottom:1px solid #23263a;text-align:right}
+    th:first-child,td:first-child{text-align:left}
+    tbody tr:hover{background:#12162a}
+    .small{font-size:12px;color:var(--muted)}
+    footer{padding:10px 16px;color:var(--muted);font-size:12px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}.pill{background:#101323;border:1px solid #2a2e47;color:#dfe4ff;padding:6px 10px;border-radius:999px;font-size:12px}.insights h3{margin:12px 0 6px;font-size:14px;color:#dbe0f5}.insights p{margin:6px 0;color:#c9cee6;font-size:13px;line-height:1.45}.insights ul{margin:6px 0 10px 18px;color:#c9cee6;font-size:13px;line-height:1.45}
+  .callout{padding:12px;border:1px solid #2a2e47;border-radius:12px;background:#12162a;margin:10px 0}
+  .callout.good{border-color:#2c8b6b}
+  .callout.warn{border-color:#c9983a}
+  .riskbar{display:flex;gap:10px;align-items:center;margin:8px 0}
+  .dot{width:12px;height:12px;border-radius:999px;background:#2a2e47;box-shadow:0 0 0 1px #2a2e47 inset}
+  .dot.green{background:#2ec27e}
+  .dot.yellow{background:#f6c177}
+  .dot.red{background:#ff6b6b}
+  .tag{background:#101323;border:1px solid #2a2e47;color:#dfe4ff;padding:4px 8px;border-radius:999px;font-size:12px}
+  .tag.green{border-color:#2ec27e;color:#b6f2d2}
+  .tag.yellow{border-color:#f6c177;color:#ffe2b5}
+  .tag.red{border-color:#ff6b6b;color:#ffb5b5}
+  .checklist{display:grid;gap:6px;margin:6px 0 2px}
+  .checklist label{display:flex;gap:8px;align-items:flex-start;background:#101323;border:1px solid #2a2e47;padding:8px 10px;border-radius:10px}
+  .checklist input{margin-top:2px;accent-color:#5ae0b5}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Situación 3 — Simulador de Estimadores (Canvas, HTML + JS)</h1>
+    <p>Distribución uniforme discreta U{1,…,θ}. Compara 5 estimadores del enunciado (y UMVU de referencia) en Sesgo, Varianza y ECM.</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card controls">
+      <div class="content">
+        <h2>Parámetros y opciones</h2>
+
+        <div class="row">
+          <label for="theta">θ (tamaño de la población)</label>
+          <input id="theta" type="range" min="10" max="500" value="100" step="1">
+          <input id="theta_n" type="number" value="100" min="1" max="9999">
+        </div>
+        <div class="row">
+          <label for="n">n (tamaño de muestra)</label>
+          <input id="n" type="range" min="2" max="100" value="10" step="1">
+          <input id="n_n" type="number" value="10" min="2" max="9999">
+        </div>
+        <div class="row">
+          <label for="R">R (réplicas)</label>
+          <input id="R" type="range" min="200" max="20000" value="4000" step="200">
+          <input id="R_n" type="number" value="4000" min="100" max="200000">
+        </div>
+        <div class="row">
+          <label for="seed">Semilla</label>
+          <input id="seed" type="text" value="12345">
+          <span class="small">Reproducible</span>
+        </div>
+
+        <div class="badges">
+          <label class="badge"><input type="checkbox" class="est" value="e1" checked> 2×X̄ − 1</label>
+          <label class="badge"><input type="checkbox" class="est" value="e2" checked> X(max)+X(min) − 1</label>
+          <label class="badge"><input type="checkbox" class="est" value="e3" checked> X(max) + d̄</label>
+          <label class="badge"><input type="checkbox" class="est" value="e4" checked> 2×Med − 1</label>
+          <label class="badge"><input type="checkbox" class="est" value="e5"> X̄ + 3S</label>
+          <label class="badge" title="Solo como referencia teórica"><input type="checkbox" class="est" value="umvu" checked> UMVU ( (n+1)/n · X(max) − 1 )</label>
+        </div>
+
+        <div class="row" style="grid-template-columns: 1fr 1fr;">
+          <div>
+            <label for="histPick">Histograma de</label>
+            <select id="histPick" style="width:100%;padding:8px;border-radius:10px;border:1px solid #2a2e47;background:#0e1120;color:var(--text)">
+              <option value="e1">2×X̄ − 1</option>
+              <option value="e2">X(max)+X(min) − 1</option>
+              <option value="e3">X(max) + d̄</option>
+              <option value="e4">2×Med − 1</option>
+              <option value="e5">X̄ + 3S</option>
+              <option value="umvu">UMVU</option>
+            </select>
+          </div>
+          <div>
+            <label for="bins">Bins histograma</label>
+            <input id="bins" type="number" value="24" min="6" max="80">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="run" class="btn primary">Simular</button>
+          <button id="quick" class="btn">Rápida (R=2000)</button>
+          <button id="precise" class="btn">Precisa (R=20000)</button>
+        </div>
+
+        <footer>
+          d̄ = (X(max) − X(min)) / (n − 1). Para n=1, se toma 0.<br>
+          Consejo: inicia con R≈2000 para ver tendencias y luego sube a 20000.
+        </footer>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="content">
+        <div class="chart-head">
+          <div class="title">ECM por estimador</div>
+          <div class="meta" id="meta"></div>
+        </div>
+      </div>
+      <canvas id="chartMSE" height="360"></canvas>
+    </section>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <div class="content">
+        <div class="chart-head">
+          <div class="title">Histograma de estimaciones (<span id="histLabel">2×X̄ − 1</span>)</div>
+          <div class="meta" id="meta2"></div>
+        </div>
+      </div>
+      <canvas id="hist" height="320"></canvas>
+    </section>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <div class="content">
+        <h2>Tabla comparativa (media, sesgo, varianza, ECM)</h2>
+        <div class="tableWrap">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>Estimador</th>
+                <th>Media</th>
+                <th>Sesgo</th>
+                <th>Varianza</th>
+                <th>ECM</th>
+                <th class="small">Var(2×X̄−1) teórica</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+      <section class="card" style="grid-column: 1 / -1;">
+      <div class="content">
+        <h2>Interpretación automática</h2>
+        <div class="pills" id="summaryPills"></div>
+        <div id="insights" class="insights"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ========= Mejora de render (HiDPI) y utilidades =========
+    function setupCanvas(canvas){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.imageSmoothingEnabled = true;
+      return {ctx, cssW: rect.width, cssH: rect.height};
+    }
+    function fmt(x){
+      if(!isFinite(x)) return '—';
+      if(Math.abs(x)>=1000) return x.toFixed(0);
+      if(Math.abs(x)>=100) return x.toFixed(1);
+      return x.toFixed(3);
+    }
+    function niceTicks(min, max, maxTicks=5){
+      if(min===max){ return [min]; }
+      const span=max-min;
+      const step = Math.pow(10, Math.floor(Math.log10(span/maxTicks)));
+      const err = (span/maxTicks)/step;
+      const mult = err>=7?10: err>=3?5: err>=1.5?2:1;
+      const niceStep = mult*step;
+      const niceMin = Math.floor(min/niceStep)*niceStep;
+      const niceMax = Math.ceil(max/niceStep)*niceStep;
+      const ticks=[]; for(let v=niceMin; v<=niceMax+1e-9; v+=niceStep) ticks.push(v);
+      return ticks;
+    }
+    function argmin(arr){let m=Infinity,idx=-1; for(let i=0;i<arr.length;i++){if(arr[i]<m){m=arr[i];idx=i}} return idx}
+    function labelOf(key){
+      return ({e1:"2×X̄−1", e2:"X(max)+X(min)−1", e3:"X(max)+d̄", e4:"2×Med−1", e5:"X̄+3S", umvu:"UMVU"})[key] || key
+    }
+
+    // --------- Generación de datos (igual que antes) ---------
+    function mulberry32(a){return function(){var t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+    function randintIncl(rng, a, b){return a + Math.floor(rng()*(b-a+1))}
+    function mean(arr){let s=0;for(const v of arr) s+=v;return s/arr.length}
+    function variance(arr){const m=mean(arr);let s=0;for(const v of arr){const d=v-m; s+=d*d}return s/(arr.length-1)}
+    function estimatorsFromSample(x){
+      const n=x.length;
+      let min=Infinity,max=-Infinity,sum=0; for(const v of x){if(v<min)min=v;if(v>max)max=v;sum+=v}
+      const xbar=sum/n;
+      let s2=0; for(const v of x){const d=v-xbar; s2+=d*d}
+      const S = n>1 ? Math.sqrt(s2/(n-1)) : 0;
+      const xs=[...x].sort((a,b)=>a-b);
+      const med = (n%2? xs[(n>>1)] : 0.5*(xs[n/2-1]+xs[n/2]));
+      const dbar = n>1 ? (max-min)/(n-1) : 0;
+      const e1 = 2*xbar - 1;
+      const e2 = max + min - 1;
+      const e3 = max + dbar;
+      const e4 = 2*med - 1;
+      const e5 = xbar + 3*S;
+      const umvu = ((n+1)/n)*max - 1; 
+      return {e1,e2,e3,e4,e5,umvu};
+    }
+    function simulate(theta,n,R,active,seed){
+      const rng = mulberry32(hashCode(seed.toString()));
+      const arrays = {e1:[],e2:[],e3:[],e4:[],e5:[],umvu:[]};
+      for(let r=0;r<R;r++){
+        const x = new Array(n);
+        for(let i=0;i<n;i++) x[i]=randintIncl(rng,1,theta);
+        const est=estimatorsFromSample(x);
+        for(const k of Object.keys(arrays)) if(active.has(k)) arrays[k].push(est[k]);
+      }
+      const out=[];
+      for(const k of active){
+        const arr=arrays[k];
+        const m=mean(arr);
+        const v=variance(arr);
+        const bias=m-theta;
+        const mse=v + bias*bias;
+        out.push({key:k, mean:m, variance:v, bias:bias, mse:mse});
+      }
+      const varTheo = (theta*theta - 1)/(3*n);
+      return {arrays, stats:out, varTheo};
+    }
+    function hashCode(str){let h=2166136261>>>0; for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)} return h>>>0}
+
+    // --------- Dibujo mejorado Canvas ---------
+    function drawAxes(ctx, w, h, m){
+      ctx.strokeStyle="#2a2e47"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(m.left, m.top); ctx.lineTo(m.left, h-m.bottom); ctx.lineTo(w-m.right, h-m.bottom); ctx.stroke();
+    }
+
+    function drawMSEBarChart(canvas, stats){
+      const {ctx, cssW:w, cssH:h} = setupCanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+      const m={top:20,right:18,bottom:64,left:86};
+      drawAxes(ctx,w,h,m);
+      const names = stats.map(s=>labelOf(s.key));
+      const values = stats.map(s=>s.mse);
+      const vmax = Math.max(...values)*1.15 || 1;
+      const innerW = w - m.left - m.right;
+      const innerH = h - m.top - m.bottom;
+      const barW = innerW/(values.length*1.6);
+      const gap = barW*0.6;
+      const y = v => h - m.bottom - (v/vmax)*innerH;
+
+      // grid + ticks
+      const ticks = niceTicks(0, vmax, 6);
+      ctx.strokeStyle="#1f2238"; ctx.fillStyle="#9aa0b4"; ctx.font="12px system-ui";
+      for(const t of ticks){
+        const yy=y(t);
+        ctx.beginPath(); ctx.moveTo(m.left,yy); ctx.lineTo(w-m.right,yy); ctx.stroke();
+        ctx.fillText(fmt(t), 12, yy+4);
+      }
+
+      // bars
+      for(let i=0;i<values.length;i++){
+        const val=values[i];
+        const x = m.left + 8 + i*(barW+gap);
+        const yTop = y(val);
+        const grad = ctx.createLinearGradient(0,yTop,0,h-m.bottom);
+        grad.addColorStop(0, i===argmin(values)?"#5ae0b5":"#9ab5ff");
+        grad.addColorStop(1, i===argmin(values)?"#3bc49b":"#6f8cff");
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, yTop, barW, (h-m.bottom) - yTop);
+        // etiqueta valor
+        ctx.fillStyle="#e8ecff"; ctx.textAlign='left'; ctx.fillText(fmt(val), x, yTop-6);
+        // etiqueta nombre (en 2 líneas si hace falta)
+        ctx.save(); ctx.translate(x+barW/2, h-m.bottom+16); ctx.rotate(-Math.PI/9);
+        ctx.fillStyle="#c9cee6"; ctx.textAlign='center'; ctx.fillText(names[i], 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function drawHistogram(canvas, arr, bins, theta){
+      const {ctx, cssW:w, cssH:h} = setupCanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+      if(!arr || !arr.length){return}
+      const m={top:18,right:18,bottom:48,left:72};
+      const innerW=w-m.left-m.right, innerH=h-m.top-m.bottom;
+
+      const min = Math.min(...arr), max=Math.max(...arr);
+      const K=Math.max(6,Math.min(bins,80));
+      const step=(max-min)/K || 1; const counts=new Array(K).fill(0);
+      for(const v of arr){ let idx=Math.floor((v-min)/step); if(idx>=K) idx=K-1; counts[idx]++ }
+      const cmax=Math.max(...counts);
+      const x = i => m.left + (i/K)*innerW;
+      const y = c => h - m.bottom - (c/cmax)*innerH;
+
+      // grid y ticks eje Y
+      const yTicks = niceTicks(0, cmax, 5);
+      ctx.strokeStyle="#1f2238"; ctx.fillStyle="#9aa0b4"; ctx.font="12px system-ui";
+      for(const t of yTicks){ const yy=y(t); ctx.beginPath(); ctx.moveTo(m.left,yy); ctx.lineTo(w-m.right,yy); ctx.stroke(); ctx.fillText(String(t), 16, yy+4); }
+
+      // barras
+      for(let i=0;i<K;i++){
+        const xx=x(i)+2; const bw=innerW/K - 4; const yy=y(counts[i]);
+        const grad=ctx.createLinearGradient(0,yy,0,h-m.bottom);
+        grad.addColorStop(0,"#9ab5ff"); grad.addColorStop(1,"#6f8cff");
+        ctx.fillStyle=grad; ctx.fillRect(xx,yy,bw,(h-m.bottom)-yy);
+      }
+
+      // línea vertical en θ (valor objetivo de la estimación)
+      const xt = m.left + ((theta - min)/(max - min)) * innerW;
+      if(isFinite(xt)){
+        ctx.strokeStyle="#5ae0b5"; ctx.lineWidth=2; ctx.setLineDash([6,6]);
+        ctx.beginPath(); ctx.moveTo(xt, m.top); ctx.lineTo(xt, h-m.bottom); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle="#5ae0b5"; ctx.fillText(`θ=${fmt(theta)}`, xt+6, m.top+14);
+      }
+      // etiquetas de eje X
+      ctx.fillStyle="#c9cee6"; ctx.textAlign='center';
+      ctx.fillText(`min=${fmt(min)}  max=${fmt(max)}`, m.left + innerW/2, h-12);
+    }
+
+    // --------- Tabla ---------
+    function renderTable(tbody, stats, theta, varTheo){
+      stats = [...stats].sort((a,b)=>a.mse-b.mse);
+      tbody.innerHTML = stats.map(s=>`
+        <tr>
+          <td>${labelOf(s.key)}</td>
+          <td>${fmt(s.mean)}</td>
+          <td>${fmt(s.bias)}</td>
+          <td>${fmt(s.variance)}</td>
+          <td><b>${fmt(s.mse)}</b></td>
+          <td>${s.key==='e1'? fmt(varTheo): ''}</td>
+        </tr>`).join('');
+    }
+
+    // --------- Insights dinámicos ---------
+    function renderInsights(container, pills, theta, n, stats, hasUMVU, arrays){
+      const k2name = {e1:"2×X̄−1", e2:"X(max)+X(min)−1", e3:"X(max)+d̄", e4:"2×Med−1", e5:"X̄+3S", umvu:"UMVU"};
+      const sorted=[...stats].sort((a,b)=>a.mse-b.mse);
+      if(sorted.length===0){ container.innerHTML=''; pills.innerHTML=''; return; }
+      const best=sorted[0], second=sorted[1]||null; const ratio=n/theta;
+      const biasPct = Math.abs(best.bias)/theta*100;
+      const mseShareBias = (best.bias*best.bias)/(best.mse||1);
+      const improv = second? (second.mse - best.mse)/(second.mse)*100 : null;
+
+      // Cuantiles del mejor estimador (90%)
+      const Q = (arr,q)=>{ if(!arr||arr.length===0) return NaN; const a=[...arr].sort((x,y)=>x-y); const pos=(a.length-1)*q; const i=Math.floor(pos); const frac=pos-i; return a[i+1]!==undefined? a[i]+frac*(a[i+1]-a[i]) : a[i]; };
+      const arrBest = arrays && arrays[best.key] ? arrays[best.key] : [];
+      const q05 = Q(arrBest,0.05), q50 = Q(arrBest,0.50), q95 = Q(arrBest,0.95);
+      const spanRel = isFinite(q95-q05) ? (q95-q05)/theta : NaN;
+
+      // Pills resumen
+      const pillHTML = [
+        `<span class="pill">Ganador: <b>${k2name[best.key]}</b></span>`,
+        `<span class="pill">ECM: ${fmt(best.mse)}</span>`,
+        `<span class="pill">Sesgo: ${fmt(best.bias)} (${fmt(biasPct)}%)</span>`,
+        `<span class="pill">n/θ ≈ ${(ratio).toFixed(3)}</span>`,
+        (isFinite(q05)? `<span class=\"pill\">P90: ${fmt(q05)}–${fmt(q95)}</span>`: '')
+      ].join('');
+      pills.innerHTML = pillHTML;
+
+      // Texto principal orientado al problema (vehículos informales)
+      const sesgoDesc = biasPct < 1 ? 'prácticamente nulo' : (best.bias>0? 'positivo (sobreestima)': 'negativo (subestima)');
+      const driver = mseShareBias>0.5 ? 'dominado por el sesgo' : 'dominado por la varianza';
+      const inc = isFinite(spanRel) ? (spanRel>0.4? 'alta': spanRel>0.2? 'media': 'baja') : '—';
+      const risk = inc==='alta'?'red': inc==='media'?'yellow':'green';
+
+      let html = '';
+      html += `<h3>Interpretación en el contexto de vehículos informales (\"piratas\")</h3>`;
+      html += `<p>En este ejercicio, θ representa el <b>número total de vehículos informales</b> activos en el territorio. Bajo el escenario simulado con θ=${theta} y una muestra de tamaño n=${n}, el estimador <b>${k2name[best.key]}</b> logra el menor <b>ECM</b>. Su sesgo es ${sesgoDesc} y el error global está ${driver}. El rango P90 de sus estimaciones es <b>${fmt(q05)}–${fmt(q95)}</b>, lo que sugiere una <b>incertidumbre ${inc}</b> para la toma de decisiones.</p>`;
+
+      // Semáforo de riesgo y checklist
+      html += `<div class="riskbar"><span class="tag ${risk}">Semáforo: ${risk==='red'?'ALTO':(risk==='yellow'?'MEDIO':'BAJO')}</span><span class="small"> basado en amplitud P90 relativa</span> <div class="dot ${risk}"></div></div>`;
+      html += `<h3>Checklist de sesgos de muestreo</h3>
+      <div class="checklist">
+        <label><input type="checkbox"> Muestreo solo en zonas de alta incidencia (“zonas calientes”).</label>
+        <label><input type="checkbox"> Horarios fijos (no aleatorios); falta de rotación de turnos.</label>
+        <label><input type="checkbox"> Un único día de operativo (sin variación por día de la semana).</label>
+        <label><input type="checkbox"> Recuentos duplicados (mismo vehículo contado más de una vez).</label>
+        <label><input type="checkbox"> Evasión por efecto patrulla (vehículos se ocultan al ver controles).</label>
+        <label><input type="checkbox"> Subpoblaciones heterogéneas sin estratificar (barrios/tipos de servicio).</label>
+      </div>`;
+      // Implicaciones operativas
+      html += `<div class="callout ${inc==='alta'?'warn':'good'}"><b>Implicación operativa:</b> si la realidad tuviera alrededor de θ=${theta} vehículos informales, al repetir operativos similares muchas veces, el 90% de las estimaciones con <b>${k2name[best.key]}</b> caería entre ${fmt(q05)} y ${fmt(q95)}. Para <b>planificación</b>, conviene usar el extremo superior cuando el sesgo es negativo (evitar subdimensionar controles) y el extremo medio/inferior cuando el sesgo es positivo (evitar sobredimensionar presupuesto).</div>`;
+
+      // Lecturas por tipo
+      const e1=stats.find(s=>s.key==='e1'); const e3=stats.find(s=>s.key==='e3'); const e5=stats.find(s=>s.key==='e5'); const umvu=stats.find(s=>s.key==='umvu'); const e2=stats.find(s=>s.key==='e2');
+      html += `<h3>Lecturas por estimador</h3><ul>`;
+      if(e1){ html += `<li><b>2×X̄−1</b>: insesgado en teoría. Bueno cuando n aumenta. Útil para <i>dimensionar recursos</i> de seguimiento en planes sostenidos.</li>`; }
+      if(e3){ html += `<li><b>X(max)+d̄</b>: aprovecha el máximo observado con corrección por cobertura. Interesante cuando <code>n/θ</code> es bajo (operativos pequeños o exploratorios).</li>`; }
+      if(e2){ html += `<li><b>X(max)+X(min)−1</b>: depende de extremos; puede tener varianza alta con n pequeño ⇒ úsalo con cautela si los primeros operativos son muy reducidos.</li>`; }
+      if(e5){ html += `<li><b>X̄+3S</b>: tiende a <b>sobreestimar</b> en uniforme; no es recomendable para decidir cupos de control ni presupuesto.</li>`; }
+      if(hasUMVU&&umvu){ html += `<li><b>UMVU</b>: muy competitivo cuando <code>n/θ</code> es bajo. Bueno para una <i>estimación conservadora</i> inicial al arrancar el plan de control.</li>`; }
+      html += `</ul>`;
+
+      // Reglas prácticas y tamaño muestral objetivo
+      const n10 = Math.ceil(1/(3*0.1*0.1)); // ≈34
+      const n05 = Math.ceil(1/(3*0.05*0.05)); // ≈134
+      html += `<h3>Reglas prácticas para el operativo</h3>`;
+      html += `<ul>`+
+              `<li><b>Cobertura de muestra</b>: con <code>n/θ≈${(ratio).toFixed(3)}</code>, ${ratio<0.15? 'la cobertura es baja; prioriza métodos basados en extremos (UMVU / X(max)+d̄) y repite muestreos en distintos horarios/zonas.':'la cobertura ya permite que 2×X̄−1 sea competitivo por su baja varianza.'}</li>`+
+              `<li><b>Meta de precisión</b>: si buscas <i>RMSE ≈ 10%</i> con 2×X̄−1, apunta a <b>n≈${n10}</b>; para <i>RMSE ≈ 5%</i>, apunta a <b>n≈${n05}</b> (independiente de θ por aproximación teórica).</li>`+
+              `<li><b>Riesgos de sesgo</b>: evita patrullajes solo en “zonas calientes” u horarios fijos; estratifica por sector y franja horaria para acercarte al supuesto de muestreo aleatorio.</li>`+
+              `</ul>`;
+
+      // Recomendación final
+      html += `<h3>Recomendación</h3>`;
+      if(ratio<0.15){
+        html += `<p>Para un arranque con <b>cobertura baja</b> continúa con <b>${k2name[best.key]}</b>${hasUMVU?' (o UMVU como referencia)':''}, usa el <b>percentil 95</b> para planear operativos y programa nuevas rondas de muestreo en diferentes franjas. A medida que aumente n, reevalúa: 2×X̄−1 suele volverse la opción preferida.</p>`;
+      } else {
+        html += `<p>Con una <b>cobertura moderada/alta</b>, <b>${k2name[best.key]}</b> ofrece un buen equilibrio. Usa el <b>percentil 50–75</b> para programación semanal y monitorea el sesgo; si es negativo, añade un margen de seguridad del 5–10% para no subestimar el parque informal.</p>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // --------- Wiring / interacción ---------
+    const el = (id)=>document.getElementById(id);
+    const thetaR=el('theta'), thetaN=el('theta_n');
+    const nR=el('n'), nN=el('n_n');
+    const RR=el('R'), RN=el('R_n');
+    const seed=el('seed');
+    const runBtn=el('run'), quickBtn=el('quick'), preciseBtn=el('precise');
+    const chartMSE=el('chartMSE'); const hist=el('hist');
+    const tbody=document.querySelector('#tbl tbody');
+    const meta=el('meta'), meta2=el('meta2');
+    const histPick=el('histPick'), bins=el('bins'), histLabel=el('histLabel');
+    const insightsEl = document.getElementById('insights');
+    const pillsEl = document.getElementById('summaryPills');
+
+    function bindPair(range,num){ range.addEventListener('input',()=>num.value=range.value); num.addEventListener('input',()=>range.value=num.value); }
+    bindPair(thetaR,thetaN); bindPair(nR,nN); bindPair(RR,RN);
+
+    function getActiveEstimators(){ return new Set([...document.querySelectorAll('.est')].filter(e=>e.checked).map(e=>e.value)); }
+
+    let last=null;
+    function run(Roverride){
+      const theta=parseInt(thetaN.value); const n=parseInt(nN.value); let R=parseInt(RN.value); if(Roverride) R=Roverride;
+      const active=getActiveEstimators();
+      const res = simulate(theta,n,R,active,seed.value||'12345');
+      const {arrays, stats, varTheo} = res;
+      meta.textContent = `θ=${theta} · n=${n} · R=${R} · Estimadores=${[...active].map(labelOf).join(', ')}`;
+      drawMSEBarChart(chartMSE, stats);
+      const key=histPick.value; histLabel.textContent=labelOf(key);
+      drawHistogram(hist, arrays[key], parseInt(bins.value), theta);
+      meta2.textContent = `m=${(arrays[key]&&arrays[key].length)||0} muestras`;
+      renderTable(tbody, stats, theta, varTheo);
+      // Llamar interpretación dinámica orientada al problema de vehículos informales
+      try { renderInsights(insightsEl, pillsEl, theta, n, stats, active.has('umvu'), arrays); } catch(e) { console.warn('Insights error', e); }
+      last={theta,n,R,active,arrays,stats,varTheo, key, bins:parseInt(bins.value)};
+    }
+
+    runBtn.addEventListener('click',()=>run());
+    quickBtn.addEventListener('click',()=>run(2000));
+    preciseBtn.addEventListener('click',()=>run(20000));
+    histPick.addEventListener('change',()=>{ if(last){ last.key=histPick.value; drawHistogram(hist,last.arrays[last.key], last.bins, last.theta); histLabel.textContent=labelOf(last.key);} });
+    bins.addEventListener('change',()=>{ if(last){ last.bins=parseInt(bins.value); drawHistogram(hist,last.arrays[last.key], last.bins, last.theta); }});
+
+    // Redibujar nítido al redimensionar
+    window.addEventListener('resize',()=>{ if(!last) return; drawMSEBarChart(chartMSE,last.stats); drawHistogram(hist,last.arrays[last.key], last.bins, last.theta); });
+
+    // primer render
+    run(2000);
+  </script>
+</body>
+</html>

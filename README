@@ -1,0 +1,79 @@
+# Simulador de Estimadores Estadísticos para U{1, ..., θ}
+
+Una herramienta web interactiva para simular, comparar y visualizar el rendimiento de estimadores estadísticos en el contexto del problema de estimación de un máximo poblacional (conocido como el "Problema del Tanque Alemán").
+
+
+
+## Demo en Vivo
+
+**[LINK]** 
+
+---
+
+## Contexto del Problema: "Situación 3"
+
+Este proyecto nace como una solución a un ejercicio de estadística inferencial. El problema plantea la necesidad de estimar el número total desconocido, $\theta$, de una población de vehículos informales ("piratas") que están numerados consecutivamente desde $1$ hasta $\theta$. Para ello, se toma una muestra aleatoria de tamaño $n$.
+
+La aplicación simula y compara el rendimiento de los siguientes cinco estimadores propuestos, además de un estimador de referencia (UMVU):
+
+1.  $\hat{\theta}_{(1)} = 2\bar{X}_n - 1$
+2.  $\hat{\theta}_{(2)} = X_{(n)} + X_{(1)} - 1$
+3.  $\hat{\theta}_{(3)} = X_{max} + \bar{d}$, donde $\bar{d} = \frac{X_{(n)} - X_{(1)}}{n-1}$
+4.  $\hat{\theta}_{(4)} = 2Me(X) - 1$
+5.  $\hat{\theta}_{(5)} = \bar{X} + 3S$
+
+El objetivo es evaluar cada estimador en función de su **Sesgo**, **Varianza** y **Error Cuadrático Medio (ECM)**.
+
+---
+
+## Características Principales
+
+* **Simulación Interactiva:** Ajusta los parámetros clave de la simulación en tiempo real:
+    * $\theta$: El tamaño real de la población.
+    * $n$: El tamaño de la muestra.
+    * $R$: El número de réplicas o experimentos a ejecutar.
+* **Comparación Detallada:** Una tabla dinámica muestra la media, sesgo, varianza y ECM de cada estimador, ordenando los resultados por el de menor error.
+* **Visualizaciones Avanzadas:**
+    * **Gráfico de Barras de ECM:** Identifica visualmente y al instante el estimador con mejor rendimiento.
+    * **Histograma de Distribución:** Explora la distribución de las estimaciones para cualquier estimador seleccionado, permitiendo analizar su comportamiento y consistencia.
+* **Reproducibilidad Científica:** Utiliza una **semilla** para el generador de números aleatorios, garantizando que los resultados puedan ser replicados de forma exacta.
+* **Interpretación Automática:** La herramienta no solo muestra datos, sino que genera un análisis automático que:
+    * Contextualiza los resultados en el escenario práctico de los "vehículos informales".
+    * Ofrece un "semáforo de riesgo" basado en la incertidumbre de la mejor estimación.
+    * Proporciona recomendaciones y reglas prácticas para la toma de decisiones.
+* **Diseño Responsivo:** La interfaz se adapta a diferentes tamaños de pantalla, desde escritorio hasta tabletas.
+
+---
+
+## ¿Cómo Usarlo?
+
+Este proyecto es una aplicación web autocontenida en un solo archivo. **No requiere instalación, dependencias ni un servidor web.**
+
+1.  Clona o descarga este repositorio.
+2.  Abre el archivo `index.html` (o el nombre que le hayas dado) en tu navegador web preferido (Google Chrome, Firefox, etc.).
+3.  ¡Listo! Ya puedes empezar a experimentar:
+    * Ajusta los deslizadores de $\theta$, $n$ y $R$.
+    * Activa o desactiva los estimadores que deseas comparar.
+    * Haz clic en el botón **"Simular"** para ejecutar el análisis.
+    * Explora los gráficos, la tabla y la sección de interpretación.
+
+---
+
+## Tecnologías Utilizadas
+
+Este proyecto fue construido intencionalmente con tecnologías web fundamentales, sin frameworks ni librerías externas, para asegurar su portabilidad y simplicidad.
+
+* **HTML5:** Para la estructura semántica del contenido.
+* **CSS3:** Para el diseño y la estilización, utilizando variables CSS para un tema cohesivo y _media queries_ para la responsividad.
+* **JavaScript (Vanilla JS):** Para toda la lógica de la aplicación, incluyendo:
+    * El motor de simulación de Monte Carlo.
+    * Los cálculos estadísticos.
+    * La manipulación del DOM.
+    * La interactividad de la interfaz.
+* **HTML5 Canvas:** Para el renderizado de los gráficos dinámicos (barra de ECM e histograma) con soporte para pantallas de alta densidad (HiDPI/Retina).
+
+---
+
+## Licencia
+
+Este proyecto se distribuye bajo la **Licencia MIT**. Consulta el archivo `LICENSE` para más detalles.

@@ -264,7 +264,7 @@
     }
     function hashCode(str){let h=2166136261>>>0; for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)} return h>>>0}
 
-    // --------- Dibujo mejorado Canvas ---------
+    // --------- Dibujo Canvas ---------
     function drawAxes(ctx, w, h, m){
       ctx.strokeStyle="#2a2e47"; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(m.left, m.top); ctx.lineTo(m.left, h-m.bottom); ctx.lineTo(w-m.right, h-m.bottom); ctx.stroke();
